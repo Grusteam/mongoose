@@ -24,17 +24,48 @@ app.get('/', (req, res) => {
 })
 
 app.get('/roles/:role', (req, res) => {
-    User.find({role: req.params.role}, (err, user) => {
-        res.send(user);
+    User.find({role: req.params.role}, (err, users) => {
+        res.send(users);
     })
 })
 
 app.get('/set/:name', (req, res) => {
-    const newUser = new User({ name: req.params.name, role: 'user' });
+    const { name } = req.params;
 
-    newUser.save().then((user) => {
-        res.send(user);
-    });
+    User.find({ name }, (err, users = []) => {
+        const [user] = users;
+
+        if (user) {
+            res.send(`user with name ${name} is alseady exist: ${users}`);
+        } else {
+            const newUser = new User({ name, role: 'user' });
+
+            newUser.save().then((user) => {
+                res.send(user);
+            });
+        }
+    })
+})
+
+app.get('/delete/:id', (req, res) => {
+    const { id: _id } = req.params;
+
+    User.find({_id}, (err, users) => {
+
+        if (!users) {
+            res.send(`error`);
+        } else if (users.length > 1) {
+            res.send(`many of them... ${users.length}`);
+        } else if (users.length){
+            const [user] = users;
+
+            User.deleteOne({_id}, (err, user) => {
+                res.send('deleted');
+            })
+        } else {
+            res.send(`no such user`);
+        }
+    })
 })
 
 
