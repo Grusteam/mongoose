@@ -17,6 +17,10 @@ const db = mongoose.connection;
 db.on('error', error => console.log('error', error));
 db.once('open', () => console.log('db connected'));
 
+app.get('/html', (req, res) => {
+    res.sendFile(`${__dirname}/index.html`);
+})
+
 app.get('/', (req, res) => {
     User.find({}, (err, users) => {
         res.send(users);
