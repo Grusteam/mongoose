@@ -7,16 +7,21 @@ const port = process.env.EXPRESS_PORT || 8080;
 
 let User = require('./models/user');
 
+// body parser
 app.use(express.json());
+app.use(express.urlencoded({extended: false}));
+
 mongoose.connect(_DB_, {useNewUrlParser: true});
 
 const db = mongoose.connection;
 
-
-
 db.on('error', error => console.log('error', error));
 db.once('open', () => console.log('db connected'));
 
+/*  */
+app.listen(port, () => console.log(`working on ${port}`))
+
+/* html */
 app.get('/html', (req, res) => {
     res.sendFile(`${__dirname}/index.html`);
 })
@@ -30,6 +35,18 @@ app.get('/', (req, res) => {
 app.get('/roles/:role', (req, res) => {
     User.find({role: req.params.role}, (err, users) => {
         res.send(users);
+    })
+})
+
+app.get('/user/:name', (req, res) => {
+    const { name } = req.params;
+
+    User.find({name}, (err, users) => {
+        if (users.length) {
+            res.send(users);
+        } else {
+            res.status(400).send(`user with name ${name} not found`);
+        }
     })
 })
 
@@ -72,5 +89,7 @@ app.get('/delete/:id', (req, res) => {
     })
 })
 
-
-app.listen(port, () => console.log(`working on ${port}`))
+/* post */
+app.post('/', (req, res) => {
+    res.send(req.body);
+})
