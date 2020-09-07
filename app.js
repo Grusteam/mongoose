@@ -53,7 +53,7 @@ const showResults = all => {
 }
 
 /*  */
-app.get('/:tag', async (req, res) => {
+app.get('/:tag/:any?', async (req, res) => {
     const { tag } = req.params;
 
     /* show */
