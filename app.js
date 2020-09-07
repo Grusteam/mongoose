@@ -1,5 +1,12 @@
+const fs = require('fs');
 const express = require('express');
 const mongoose = require("mongoose");
+
+require.extensions['.html'] = function (module, filename) {
+    module.exports = fs.readFileSync(filename, 'utf8');
+};
+
+const indexLayout = require('./index.html');
 
 const app = express();
 const collection = 'lampwork'
@@ -14,6 +21,9 @@ let Record = require('./models/record');
 // body parser
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
+
+/* css */
+app.use(express.static('public'));
 
 const dbOptions = {
     useNewUrlParser: true
@@ -33,10 +43,11 @@ const showResults = all => {
     const filtered = all.filter(({ tag }) => tag !== 'favicon.ico')
     const sorted = filtered.sort((a, b) => b.count - a.count);
     const arr = filtered.map(({ tag, count }) => {
-        return `<div class="str">${tag} - ${count}</div>`
+        return `<tr class="tr"><td class="td">${tag}</td><td class="td">${count}</td></tr>`
     });
     const str = arr.join('');
-    const result = `<div class="all">${str}</div>`
+    const table = `<table class="table">${str}</table>`;
+    const result = indexLayout.replace('{{replace}}', table);
 
     return result;
 }
@@ -50,8 +61,6 @@ app.get('/:tag', async (req, res) => {
         const all = await Record.find();
         const layout = showResults(all);
 
-        console.log('layout', layout);
-
         return res.send(layout);
     }
 
@@ -63,14 +72,11 @@ app.get('/:tag', async (req, res) => {
         searchResult.count++;
 
         const updated = await searchResult.save();
-
-        return res.redirect(bigBeads);
-    }
-
     /* new */
-    const newRecord = new Record({ tag, count: 1 });
-
-    const saved = await newRecord.save();
+    } else {
+        const newRecord = new Record({ tag, count: 1 });
+        const saved = await newRecord.save();
+    }
 
     res.redirect(bigBeads);
 })
