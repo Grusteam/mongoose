@@ -24,6 +24,7 @@ app.use(express.urlencoded({extended: false}));
 
 /* css */
 app.use(express.static('public'));
+app.use('/frontend', express.static(`${__dirname}/frontend`));
 
 const dbOptions = {
     useNewUrlParser: true
@@ -44,6 +45,6 @@ app.get('/', (req, res) => {
     res.send('home');
 })
 
-app.get('/frontend', (req, res) => {
-    res.sendFile(`${__dirname}/public/index.html`);
-})
+// app.get('/frontend', (req, res) => {
+//     res.sendFile(`${__dirname}/frontend/index.html`);
+// })
