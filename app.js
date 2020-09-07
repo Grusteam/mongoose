@@ -2,16 +2,24 @@ const express = require('express');
 const mongoose = require("mongoose");
 
 const app = express();
-const _DB_ = `mongodb+srv://admin:${process.env.MONGO_BASE_PASSWORD}@cluster0-dbfzg.mongodb.net/test?retryWrites=true&w=majority`;
-const port = process.env.EXPRESS_PORT || 8080;
+const collection = 'lampwork'
+const { MONGO_BASE_PASSWORD, EXPRESS_PORT } = process.env
 
-let User = require('./models/user');
+const _DB_ = `mongodb+srv://admin:${MONGO_BASE_PASSWORD}@cluster0-dbfzg.mongodb.net/${collection}?retryWrites=true&w=majority`;
+const port = EXPRESS_PORT || 8080;
+const bigBeads = '//instagram.com/big_beads';
+
+let Record = require('./models/record');
 
 // body parser
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 
-mongoose.connect(_DB_, {useNewUrlParser: true});
+const dbOptions = {
+    useNewUrlParser: true
+}
+
+mongoose.connect(_DB_, dbOptions);
 
 const db = mongoose.connection;
 
@@ -21,75 +29,53 @@ db.once('open', () => console.log('db connected'));
 /*  */
 app.listen(port, () => console.log(`working on ${port}`))
 
-/* html */
-app.get('/html', (req, res) => {
-    res.sendFile(`${__dirname}/index.html`);
+const showResults = all => {
+    const filtered = all.filter(({ tag }) => tag !== 'favicon.ico')
+    const sorted = filtered.sort((a, b) => b.count - a.count);
+    const arr = filtered.map(({ tag, count }) => {
+        return `<div class="str">${tag} - ${count}</div>`
+    });
+    const str = arr.join('');
+    const result = `<div class="all">${str}</div>`
+
+    return result;
+}
+
+/*  */
+app.get('/:tag', async (req, res) => {
+    const { tag } = req.params;
+
+    /* show */
+    if (tag === 'show_results') {
+        const all = await Record.find();
+        const layout = showResults(all);
+
+        console.log('layout', layout);
+
+        return res.send(layout);
+    }
+
+    const filter = {tag};
+    const searchResult = await Record.findOne(filter);
+
+    /* update */
+    if (searchResult) {
+        searchResult.count++;
+
+        const updated = await searchResult.save();
+
+        return res.redirect(bigBeads);
+    }
+
+    /* new */
+    const newRecord = new Record({ tag, count: 1 });
+
+    const saved = await newRecord.save();
+
+    res.redirect(bigBeads);
 })
 
+/* root */
 app.get('/', (req, res) => {
-    User.find({}, (err, users) => {
-        res.send(users);
-    })
-})
-
-app.get('/roles/:role', (req, res) => {
-    User.find({role: req.params.role}, (err, users) => {
-        res.send(users);
-    })
-})
-
-app.get('/user/:name', (req, res) => {
-    const { name } = req.params;
-
-    User.find({name}, (err, users) => {
-        if (users.length) {
-            res.send(users);
-        } else {
-            res.status(400).send(`user with name ${name} not found`);
-        }
-    })
-})
-
-app.get('/set/:name', (req, res) => {
-    const { name } = req.params;
-
-    User.find({ name }, (err, users = []) => {
-        const [user] = users;
-
-        if (user) {
-            res.send(`user with name ${name} is alseady exist: ${users}`);
-        } else {
-            const newUser = new User({ name, role: 'user' });
-
-            newUser.save().then((user) => {
-                res.send(user);
-            });
-        }
-    })
-})
-
-app.get('/delete/:id', (req, res) => {
-    const { id: _id } = req.params;
-
-    User.find({_id}, (err, users) => {
-
-        if (!users) {
-            res.send(`error`);
-        } else if (users.length > 1) {
-            res.send(`many of them... ${users.length}`);
-        } else if (users.length){
-            const [user] = users;
-
-            User.deleteOne({_id}, (err, user) => {
-                res.send('deleted');
-            })
-        } else {
-            res.send(`no such user`);
-        }
-    })
-})
-
-/* post */
-app.post('/', (req, res) => {
-    res.send(req.body);
+    res.redirect(bigBeads);
 })
