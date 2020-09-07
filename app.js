@@ -1,4 +1,5 @@
 const fs = require('fs');
+const https = require('https')
 const express = require('express');
 const mongoose = require("mongoose");
 
@@ -38,7 +39,11 @@ db.on('error', error => console.log('error', error));
 db.once('open', () => console.log('db connected'));
 
 /*  */
-app.listen(port, () => console.log(`working on ${port}`))
+https.createServer({
+  key: fs.readFileSync('localhost.key'),
+  cert: fs.readFileSync('localhost.crt')
+}, app)
+.listen(port, () => console.log(`working on ${port}`))
 
 /* root */
 app.get('/', (req, res) => {
